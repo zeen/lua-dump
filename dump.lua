@@ -17,9 +17,9 @@ The following columns exist in the TSV:
 * id:integer - numeric ID assigned to object
 * type:string - type
 * key_id:integer? - reference to another object
-* value_id:integer? - reference to another object
+* val_id:integer? - reference to another object
 * key_json:string? - JSON serialization of a string, number or boolean
-* value_json:string? - JSON serialization of a string, number or boolean
+* val_json:string? - JSON serialization of a string, number or boolean
 
 Type strings include both Lua types, and additional associated virtual types:
 
@@ -39,13 +39,13 @@ Format details:
 * ID 0 represents a virtual root table.
 * We serialize the global object _G, the registry, value-type metatables, and the main and the current threads as kv of the root.
 * Metatables for table and userdata types are referenced in the key_id column.
-* tostring() version of non-value types are serialized into value_json.
+* tostring() version of non-value types are serialized into val_json.
 * Additional meta-data about functions and threads is serialized into key_json.
 * key_json is an array for upvalue and stacklocal types.
 * nil values lead to empty cells.
 * Output is sorted by id.
 
-key_json and value_json may contain certain invalid JSON data when a value cannot be represented in JSON format:
+key_json and val_json may contain certain invalid JSON data when a value cannot be represented in JSON format:
 
 * inf
 * -inf
@@ -54,7 +54,7 @@ key_json and value_json may contain certain invalid JSON data when a value canno
 
 ]]
 
-local function dump_state(file)
+local function dump_state(file, options)
 	local print;
 	local should_close_file;
 	if type(file) == "string" then
@@ -129,15 +129,21 @@ local function dump_state(file)
 		return "\""..(simple:gsub(".", escapes)).."\"";
 	end
 
-	local function header()
-		print("id\ttype\tkey_id\tvalue_id\tkey_json\tvalue_json");
-	end
-	local function vertex(id, type, key, value, json_key, json_value)
-		print(id.."\t"..type.."\t"..key.."\t"..value.."\t"..json_key.."\t"..json_value);
-	end
-	local function edge(id, type, key, value, json_key, json_value)
-		print(id.."\t"..type.."\t"..key.."\t"..value.."\t"..json_key.."\t"..json_value);
-	end
+	local TSV = {};
+	function TSV.header() print("id\ttype\tkey_id\tval_id\tkey_json\tval_json"); end
+	function TSV.vertex(...) print(table.concat({...}, "\t")); end
+	function TSV.edge(...) print(table.concat({...}, "\t")); end
+
+	local CSV = {};
+	local function tsv2csv(s) return s:gsub("\"", "\"\""):gsub("[^\t]+", "\"%1\""):gsub("\t", ","); end
+	function CSV.header() print(tsv2csv("id\ttype\tkey_id\tval_id\tkey_json\tval_json")); end
+	function CSV.vertex(...) print(tsv2csv(table.concat({...}, "\t"))); end
+	function CSV.edge(...) print(tsv2csv(table.concat({...}, "\t"))); end
+
+	local format = options and options.format == "TSV" and TSV or CSV;
+	local header = options and options.header and format.header or function() end;
+	local vertex = format.vertex;
+	local edge = format.edge;
 
 	local root = {
 		_G = debug.getregistry()[2];
