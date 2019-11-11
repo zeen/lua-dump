@@ -243,7 +243,7 @@ local function dump_state(file, options)
 			-- TODO param names
 		elseif t == "thread" then
 			local hookf, hookmask, hookcount = debug.gethook(obj);
-			if hookf then
+			if type(hookf) == "function" then
 				edge(
 					id, "hook",
 					get_id(hookf),
