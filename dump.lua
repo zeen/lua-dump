@@ -113,6 +113,34 @@ local function dump_state(file, options)
 		processed[obj] = 0;
 	end
 
+	if pcall(string.format, "%p", "") then
+		local format = string.format;
+		local function new_id(obj)
+			local t = type(obj);
+			if t == "function" or t == "string" or t == "table" or t == "userdata" or t == "thread" then
+				return format("%s:%p", t, obj);
+			elseif t == "number" or t == "boolean" or t == "nil" then
+				return format("%s:%q", t, obj);
+			else
+				error("don't know how to reference a "..t)
+			end
+		end
+
+		function skip(obj)
+			processed[ new_id(obj) ] = 0;
+		end
+
+		function get_id(obj) --> string | 0
+			if nil == obj then return 0; end
+			local id = new_id(obj);
+			if not processed[id] then
+				push(obj);
+				processed[id] = 0;
+			end
+			return id;
+		end
+	end
+
 	local escapes = {
 		["\""] = "\\\"", ["\\"] = "\\\\", ["\b"] = "\\b",
 		["\f"] = "\\f", ["\n"] = "\\n", ["\r"] = "\\r", ["\t"] = "\\t"};
