@@ -109,6 +109,9 @@ local function dump_state(file, options)
 		processed[obj] = processed_counter;
 		return processed_counter;
 	end
+	local function skip(obj)
+		processed[obj] = 0;
+	end
 
 	local escapes = {
 		["\""] = "\\\"", ["\\"] = "\\\\", ["\b"] = "\\b",
@@ -159,8 +162,8 @@ local function dump_state(file, options)
 		thread_mt = debug.getmetatable(debug.getregistry()[1]);
 	};
 
-	processed[dump_state] = 0;
-	processed[root] = 0;
+	skip(dump_state);
+	skip(root);
 
 	push(root);
 
