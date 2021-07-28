@@ -131,14 +131,18 @@ local function dump_state(file, options)
 
 	local TSV = {};
 	function TSV.header() print("id\ttype\tkey_id\tval_id\tkey_json\tval_json"); end
-	function TSV.vertex(...) print(table.concat({...}, "\t")); end
-	function TSV.edge(...) print(table.concat({...}, "\t")); end
+	function TSV.vertex(id, type, key_id, val_id, key_json, val_json)
+		print(id.."\t"..type.."\t"..key_id.."\t"..val_id.."\t"..key_json.."\t"..val_json);
+	end
+	TSV.edge = TSV.vertex;
 
 	local CSV = {};
-	local function tsv2csv(s) return s:gsub("\"", "\"\""):gsub("[^\t]+", "\"%1\""):gsub("\t", ","); end
-	function CSV.header() print(tsv2csv("id\ttype\tkey_id\tval_id\tkey_json\tval_json")); end
-	function CSV.vertex(...) print(tsv2csv(table.concat({...}, "\t"))); end
-	function CSV.edge(...) print(tsv2csv(table.concat({...}, "\t"))); end
+	local function esc(s) if s:find("[,\"]") then return "\"" .. s:gsub("\"", "\"\"") .. "\""; else return s end end
+	function CSV.header() print("id,type,key_id,val_id,key_json,val_json"); end
+	function CSV.vertex(id, type, key_id, val_id, key_json, val_json)
+		print(esc(id)..","..esc(type)..","..esc(key_id)..","..esc(val_id)..","..esc(key_json)..","..esc(val_json));
+	end
+	CSV.edge = CSV.vertex;
 
 	local format = options and options.format == "TSV" and TSV or CSV;
 	local header = options and options.header and format.header or function() end;
