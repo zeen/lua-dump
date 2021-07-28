@@ -131,8 +131,10 @@ local function dump_state(file, options)
 
 	local TSV = {};
 	function TSV.header() print("id\ttype\tkey_id\tval_id\tkey_json\tval_json"); end
-	function TSV.vertex(...) print(table.concat({...}, "\t")); end
-	function TSV.edge(...) print(table.concat({...}, "\t")); end
+	function TSV.vertex(id, type, key_id, val_id, key_json, val_json)
+		print(id.."\t"..type.."\t"..key_id.."\t"..val_id.."\t"..key_json.."\t"..val_json);
+	end
+	TSV.edge = TSV.vertex;
 
 	local CSV = {};
 	local function tsv2csv(s) return s:gsub("\"", "\"\""):gsub("[^\t]+", "\"%1\""):gsub("\t", ","); end
